@@ -28,7 +28,7 @@ async function main() {
                     n: p.name,          // назва (скорочено 'n')
                     p: p.price,         // ціна ('p')
                     c: catMap[p.categoryId] || "Інше", // категорія ('c')
-                    i: Array.isArray(p.picture) ? p.picture[0] : p.picture, // одна картинка ('i')
+                    i: Array.isArray(p.picture) ? p.picture : [p.picture],// одна картинка ('i')
                     d: p.description ? p.description.substring(0, 1500) : "" // опис ('d')
                 });
             }
