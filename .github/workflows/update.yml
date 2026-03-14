@@ -1,18 +1,25 @@
 name: Auto Update
 on:
   schedule:
-    - cron: '0 0 * * *' # Кожну ніч
-  workflow_dispatch: # Кнопка для ручного запуску
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Явно вказуємо дозвіл на запис
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # Оновлено до v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4 # Оновлено до v4
+        with:
+          node-version: '22' # Використовуємо актуальну версію
       - run: npm install
       - run: node update.js
-      - run: |
-          git config --global user.name 'bot'
-          git config --global user.email 'bot@bot.com'
+      - name: Commit and Push
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
           git add products.json
-          git commit -m "update" || exit 0
+          git commit -m "update products" || exit 0
           git push
