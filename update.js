@@ -2,8 +2,8 @@ const fs = require('fs');
 const { XMLParser } = require('fast-xml-parser');
 
 async function main() {
-    // Ваше нове посилання
-    const url = "https://backend.mydrop.com.ua/vendor/api/export/products/prom/yml?public_api_key=eb5ce830b3a54f0afeeb4967e807800e3c6c2ab2&price_field=price&param_name=Размер&stock_sync=true";
+    // Ваше актуальне посилання
+    const url = "https://backend.mydrop.com.ua/vendor/api/export/products/prom/yml?public_api_key=eb5ce830b3a54f0afeeb4967e807800e3c6c2ab2&price_field=drop_price&param_name=а&stock_sync=true";
     
     try {
         const res = await fetch(url);
@@ -23,29 +23,28 @@ async function main() {
         const uniqueProducts = [];
 
         offers.forEach(p => {
-            // Фільтруємо дублікати за назвою
             if (!seen.has(p.name)) {
                 seen.add(p.name);
                 
-                // Націнка 25% та заокруглення вгору до цілого
-                const basePrice = parseFloat(p.price);
+                // Націнка 25% від drop_price та заокруглення
+                const basePrice = parseFloat(p.price); 
                 const finalPrice = Math.ceil(basePrice * 1.25);
 
                 uniqueProducts.push({
                     n: p.name,
                     p: finalPrice,
-                    c: catMap[p.categoryId] || "Спорядження",
+                    c: catMap[p.categoryId] || "Тактичне спорядження",
                     i: Array.isArray(p.picture) ? p.picture : [p.picture],
-                    d: p.description || "Опис готується...",
-                    v: p.vendorCode || p.id
+                    d: p.description || "",
+                    v: p.vendorCode || p.id // Артикул для пошуку та замовлення
                 });
             }
         });
 
         fs.writeFileSync('products.json', JSON.stringify(uniqueProducts));
-        console.log("Базу оновлено! Унікальних товарів: " + uniqueProducts.length);
+        console.log("Оновлено! База готова. Товарів: " + uniqueProducts.length);
     } catch (err) {
-        console.error("Помилка:", err);
+        console.error("Помилка оновлення:", err);
         process.exit(1);
     }
 }
