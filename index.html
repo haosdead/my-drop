@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мій Каталог</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 200px; object-fit: contain; }
+        .price { font-weight: bold; color: green; font-size: 1.2em; margin: 10px 0; }
+        .btn { display: block; text-align: center; padding: 10px; margin-top: 5px; text-decoration: none; color: white; border-radius: 5px; font-weight: bold; }
+        .btn-tg { background: #0088cc; }
+        .btn-wa { background: #25d366; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Каталог Товарів</h1>
+    <div class="catalog" id="catalog">Завантаження...</div>
+
+    <script>
+        const CONFIG = {
+            tg: "vartagear", // ЗАМІНІТЬ НА СВІЙ
+            wa: "380933923810" // ЗАМІНІТЬ НА СВІЙ
+        };
+
+        async function load() {
+            try {
+                const res = await fetch('./products.json');
+                const products = await res.json();
+                const container = document.getElementById('catalog');
+                container.innerHTML = '';
+
+                products.forEach(p => {
+                    const img = Array.isArray(p.picture) ? p.picture[0] : p.picture;
+                    const msg = encodeURIComponent(`Хочу замовити: ${p.name}`);
+                    container.innerHTML += `
+                        <div class="card">
+                            <img src="${img}">
+                            <h3>${p.name}</h3>
+                            <div class="price">${p.price} грн</div>
+                            <a href="https://t.me/${CONFIG.tg}?text=${msg}" class="btn btn-tg">Telegram</a>
+                            <a href="https://wa.me/${CONFIG.wa}?text=${msg}" class="btn btn-wa">WhatsApp</a>
+                        </div>`;
+                });
+            } catch (e) { container.innerHTML = 'Помилка завантаження даних.'; }
+        }
+        load();
+    </script>
+</body>
+</html>
