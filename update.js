@@ -12,29 +12,31 @@ async function main() {
         const categories = data.yml_catalog.shop.categories.category;
         const offers = data.yml_catalog.shop.offers.offer;
         
-        // Створюємо словник категорій для швидкого пошуку
         const catMap = {};
-        categories.forEach(c => { catMap[c.id] = c["#text"] || c; });
+        if (Array.isArray(categories)) {
+            categories.forEach(c => { catMap[c.id] = c["#text"] || c; });
+        }
 
         const seen = new Set();
         const uniqueProducts = [];
 
         offers.forEach(p => {
-            // Групуємо за назвою, щоб не було дублів розмірів
             if (!seen.has(p.name)) {
                 seen.add(p.name);
+                // Зберігаємо ТІЛЬКИ те, що треба для карток
                 uniqueProducts.push({
-                    name: p.name,
-                    price: p.price,
-                    category: catMap[p.categoryId] || "Загальне",
-                    pictures: Array.isArray(p.picture) ? p.picture : [p.picture],
-                    desc: p.description ? p.description.substring(0, 1000) : "Опис відсутній"
+                    n: p.name,          // назва (скорочено 'n')
+                    p: p.price,         // ціна ('p')
+                    c: catMap[p.categoryId] || "Інше", // категорія ('c')
+                    i: Array.isArray(p.picture) ? p.picture[0] : p.picture, // одна картинка ('i')
+                    d: p.description ? p.description.substring(0, 1500) : "" // опис ('d')
                 });
             }
         });
 
+        // Сортуємо, щоб нові були зверху
         fs.writeFileSync('products.json', JSON.stringify(uniqueProducts));
-        console.log("Готово! Товарів після фільтрації: " + uniqueProducts.length);
+        console.log("Успішно! Файл став легшим.");
     } catch (err) {
         console.error(err);
         process.exit(1);
