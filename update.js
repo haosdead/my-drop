@@ -2,7 +2,9 @@ const fs = require('fs');
 const { XMLParser } = require('fast-xml-parser');
 
 async function main() {
-    const url = "https://backend.mydrop.com.ua/vendor/api/export/products/prom/yml?public_api_key=884402fcfe61d5998ba77d3cfd327316bca646f0&price_field=drop_price&stock_sync=true&only_available=true";
+    // Ваше нове посилання
+    const url = "https://backend.mydrop.com.ua/vendor/api/export/products/prom/yml?public_api_key=eb5ce830b3a54f0afeeb4967e807800e3c6c2ab2&price_field=price&param_name=Размер&stock_sync=true";
+    
     try {
         const res = await fetch(url);
         const xml = await res.text();
@@ -21,28 +23,29 @@ async function main() {
         const uniqueProducts = [];
 
         offers.forEach(p => {
+            // Фільтруємо дублікати за назвою
             if (!seen.has(p.name)) {
                 seen.add(p.name);
                 
-                // Націнка 25% та заокруглення вгору
-                const originalPrice = parseFloat(p.price);
-                const finalPrice = Math.ceil(originalPrice * 1.25);
+                // Націнка 25% та заокруглення вгору до цілого
+                const basePrice = parseFloat(p.price);
+                const finalPrice = Math.ceil(basePrice * 1.25);
 
                 uniqueProducts.push({
                     n: p.name,
                     p: finalPrice,
-                    c: catMap[p.categoryId] || "Інше",
+                    c: catMap[p.categoryId] || "Спорядження",
                     i: Array.isArray(p.picture) ? p.picture : [p.picture],
-                    d: p.description || "",
-                    v: p.vendorCode || p.id // Артикул
+                    d: p.description || "Опис готується...",
+                    v: p.vendorCode || p.id
                 });
             }
         });
 
         fs.writeFileSync('products.json', JSON.stringify(uniqueProducts));
-        console.log("Дані оновлено з націнкою 25%");
+        console.log("Базу оновлено! Унікальних товарів: " + uniqueProducts.length);
     } catch (err) {
-        console.error(err);
+        console.error("Помилка:", err);
         process.exit(1);
     }
 }
