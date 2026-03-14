@@ -23,20 +23,24 @@ async function main() {
         offers.forEach(p => {
             if (!seen.has(p.name)) {
                 seen.add(p.name);
-                // Зберігаємо ТІЛЬКИ те, що треба для карток
+                
+                // Націнка 25% та заокруглення вгору
+                const originalPrice = parseFloat(p.price);
+                const finalPrice = Math.ceil(originalPrice * 1.25);
+
                 uniqueProducts.push({
-                    n: p.name,          // назва (скорочено 'n')
-                    p: p.price,         // ціна ('p')
-                    c: catMap[p.categoryId] || "Інше", // категорія ('c')
-                    i: Array.isArray(p.picture) ? p.picture : [p.picture],// одна картинка ('i')
-                    d: p.description ? p.description.substring(0, 1500) : "" // опис ('d')
+                    n: p.name,
+                    p: finalPrice,
+                    c: catMap[p.categoryId] || "Інше",
+                    i: Array.isArray(p.picture) ? p.picture : [p.picture],
+                    d: p.description || "",
+                    v: p.vendorCode || p.id // Артикул
                 });
             }
         });
 
-        // Сортуємо, щоб нові були зверху
         fs.writeFileSync('products.json', JSON.stringify(uniqueProducts));
-        console.log("Успішно! Файл став легшим.");
+        console.log("Дані оновлено з націнкою 25%");
     } catch (err) {
         console.error(err);
         process.exit(1);
