@@ -32,7 +32,7 @@
                 const container = document.getElementById('catalog');
                 container.innerHTML = '';
 
-                products.forEach(p => {
+                products.slice(0, 100).forEach(p => {
                     const img = Array.isArray(p.picture) ? p.picture[0] : p.picture;
                     const msg = encodeURIComponent(`Хочу замовити: ${p.name}`);
                     container.innerHTML += `

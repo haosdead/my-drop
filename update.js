@@ -10,9 +10,15 @@ async function main() {
         const data = parser.parse(xml);
         const offers = data.yml_catalog.shop.offers.offer;
         
-        // Зберігаємо файл
-        fs.writeFileSync('products.json', JSON.stringify(offers, null, 2));
-        console.log("Дані оновлено успішно!");
+        // ОПТИМІЗАЦІЯ: беремо тільки потрібні поля
+        const optimizedProducts = offers.map(p => ({
+            name: p.name,
+            price: p.price,
+            picture: Array.isArray(p.picture) ? p.picture[0] : p.picture
+        }));
+
+        fs.writeFileSync('products.json', JSON.stringify(optimizedProducts));
+        console.log("Оптимізовано! Нова кількість товарів: " + optimizedProducts.length);
     } catch (err) {
         console.error("Помилка:", err);
         process.exit(1);
