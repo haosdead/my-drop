@@ -2,51 +2,96 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мій Каталог</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Каталог MyDrop</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-        .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        .card img { width: 100%; height: 200px; object-fit: contain; }
-        .price { font-weight: bold; color: green; font-size: 1.2em; margin: 10px 0; }
-        .btn { display: block; text-align: center; padding: 10px; margin-top: 5px; text-decoration: none; color: white; border-radius: 5px; font-weight: bold; }
-        .btn-tg { background: #0088cc; }
-        .btn-wa { background: #25d366; }
+        :root { --main: #25d366; --bg: #f0f2f5; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        
+        /* Категорії */
+        #filters { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 20px; white-space: nowrap; }
+        .cat-btn { background: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .cat-btn.active { background: var(--main); color: white; }
+
+        /* Сітка */
+        .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        @media (min-width: 768px) { .catalog { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } }
+
+        .card { background: white; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s; }
+        .card img { width: 100%; height: 180px; object-fit: cover; }
+        .info { padding: 10px; flex-grow: 1; }
+        .info h3 { font-size: 0.9rem; margin: 5px 0; height: 2.6rem; overflow: hidden; color: #333; }
+        .price { color: #2c3e50; font-weight: bold; font-size: 1.1rem; }
+
+        /* Модальне вікно */
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .close-modal { position: fixed; top: 10px; right: 10px; background: #eee; border:none; padding: 10px 20px; border-radius: 50%; font-weight: bold; }
+        .modal-content img { width: 100%; max-height: 400px; object-fit: contain; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">Каталог Товарів</h1>
+
+    <div id="filters"></div>
     <div class="catalog" id="catalog">Завантаження...</div>
 
+    <div id="modal">
+        <button class="close-modal" onclick="closeModal()">✕</button>
+        <div id="modal-body" class="modal-content"></div>
+    </div>
+
     <script>
-        const CONFIG = {
-            tg: "vartagear", // ЗАМІНІТЬ НА СВІЙ
-            wa: "380933923810" // ЗАМІНІТЬ НА СВІЙ
-        };
+        let allProducts = [];
+        const CONFIG = { tg: "haosdead", wa: "380XXXXXXXXX" }; // ЗАМІНІТЬ НА СВОЄ
 
-        async function load() {
-            try {
-                const res = await fetch('./products.json');
-                const products = await res.json();
-                const container = document.getElementById('catalog');
-                container.innerHTML = '';
-
-                products.slice(0, 100).forEach(p => {
-                    const img = Array.isArray(p.picture) ? p.picture[0] : p.picture;
-                    const msg = encodeURIComponent(`Хочу замовити: ${p.name}`);
-                    container.innerHTML += `
-                        <div class="card">
-                            <img src="${img}">
-                            <h3>${p.name}</h3>
-                            <div class="price">${p.price} грн</div>
-                            <a href="https://t.me/${CONFIG.tg}?text=${msg}" class="btn btn-tg">Telegram</a>
-                            <a href="https://wa.me/${CONFIG.wa}?text=${msg}" class="btn btn-wa">WhatsApp</a>
-                        </div>`;
-                });
-            } catch (e) { container.innerHTML = 'Помилка завантаження даних.'; }
+        async function init() {
+            const res = await fetch('products.json');
+            allProducts = await res.json();
+            
+            // Створюємо кнопки категорій
+            const cats = ['Всі', ...new Set(allProducts.map(p => p.category))];
+            document.getElementById('filters').innerHTML = cats.map(c => 
+                `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`).join('');
+            
+            render(allProducts);
         }
-        load();
+
+        function render(list) {
+            const container = document.getElementById('catalog');
+            container.innerHTML = list.slice(0, 200).map((p, idx) => `
+                <div class="card" onclick="openModal(${allProducts.indexOf(p)})">
+                    <img src="${p.pictures[0]}" loading="lazy">
+                    <div class="info">
+                        <h3>${p.name}</h3>
+                        <div class="price">${p.price} грн</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filter(cat, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filtered = cat === 'Всі' ? allProducts : allProducts.filter(p => p.category === cat);
+            render(filtered);
+        }
+
+        function openModal(idx) {
+            const p = allProducts[idx];
+            const msg = encodeURIComponent(`Замовлення: ${p.name}`);
+            document.getElementById('modal-body').innerHTML = `
+                <img src="${p.pictures[0]}">
+                <h2>${p.name}</h2>
+                <p><b>Ціна: ${p.price} грн</b></p>
+                <div style="margin: 20px 0;">${p.desc}</div>
+                <a href="https://t.me/${CONFIG.tg}?text=${msg}" style="display:block; background:#0088cc; color:white; text-align:center; padding:15px; text-decoration:none; border-radius:10px; margin-bottom:10px;">Замовити в Telegram</a>
+                <a href="https://wa.me/${CONFIG.wa}?text=${msg}" style="display:block; background:#25d366; color:white; text-align:center; padding:15px; text-decoration:none; border-radius:10px;">Замовити в WhatsApp</a>
+            `;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        init();
     </script>
 </body>
 </html>

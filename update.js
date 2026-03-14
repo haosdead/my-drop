@@ -8,19 +8,35 @@ async function main() {
         const xml = await res.text();
         const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
         const data = parser.parse(xml);
+        
+        const categories = data.yml_catalog.shop.categories.category;
         const offers = data.yml_catalog.shop.offers.offer;
         
-        // ОПТИМІЗАЦІЯ: беремо тільки потрібні поля
-        const optimizedProducts = offers.map(p => ({
-            name: p.name,
-            price: p.price,
-            picture: Array.isArray(p.picture) ? p.picture[0] : p.picture
-        }));
+        // Створюємо словник категорій для швидкого пошуку
+        const catMap = {};
+        categories.forEach(c => { catMap[c.id] = c["#text"] || c; });
 
-        fs.writeFileSync('products.json', JSON.stringify(optimizedProducts));
-        console.log("Оптимізовано! Нова кількість товарів: " + optimizedProducts.length);
+        const seen = new Set();
+        const uniqueProducts = [];
+
+        offers.forEach(p => {
+            // Групуємо за назвою, щоб не було дублів розмірів
+            if (!seen.has(p.name)) {
+                seen.add(p.name);
+                uniqueProducts.push({
+                    name: p.name,
+                    price: p.price,
+                    category: catMap[p.categoryId] || "Загальне",
+                    pictures: Array.isArray(p.picture) ? p.picture : [p.picture],
+                    desc: p.description ? p.description.substring(0, 1000) : "Опис відсутній"
+                });
+            }
+        });
+
+        fs.writeFileSync('products.json', JSON.stringify(uniqueProducts));
+        console.log("Готово! Товарів після фільтрації: " + uniqueProducts.length);
     } catch (err) {
-        console.error("Помилка:", err);
+        console.error(err);
         process.exit(1);
     }
 }
